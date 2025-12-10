@@ -1,0 +1,65 @@
+# This section defines your project's metadata for Poetry
+[tool.poetry]
+name = "URL-Shortener"
+version = "0.1.0"
+description = "A URL Shortener Service"
+authors = ["Mohammad hadi Niknam <niknam@aut.ac.ir>"]
+readme = "README.md"
+# This section includes each of your modules from the 'src' directory
+packages = [
+    {include = "api", from = "src"},
+    {include = "core", from = "src"},
+    {include = "db", from = "src"},
+    {include = "models", from = "src"},
+    {include = "repositories", from = "src"},
+    {include = "schemas", from = "src"},
+    {include = "services", from = "src"}
+]
+
+# These are the dependencies your application needs to run
+[tool.poetry.dependencies]
+# The python version is correctly placed here
+python = ">=3.13"
+python-dotenv = "^1.0.1"
+sqlalchemy = "^2.0.30"
+psycopg2-binary = "^2.9.9"
+fastapi = "^0.115.0"
+uvicorn = "^0.32.0"
+alembic = "^1.13.1"
+[tool.poetry.group.dev.dependencies]
+black = "^24.4.2"
+flake8 = "^7.0.0"
+isort = "^5.13.2"
+mypy = "^1.10.0"
+pytest = "^8.3.3"
+httpx = "^0.27.0"
+
+# This section is required by Python's build system
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+# --- Tool Configurations ---
+
+# Configuration for the Black code formatter
+[tool.black]
+line-length = 88
+target-version = ["py313"]
+
+# Configuration for the isort import sorter
+[tool.isort]
+profile = "black"
+line_length = 88
+
+# Configuration for the flake8 linter
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203"] # Ignore rule that conflicts with Black
+
+# Configuration for the mypy static type checker
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+mypy_path = "src"
