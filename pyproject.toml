@@ -8,7 +8,7 @@ readme = "README.md"
 # This section includes each of your modules from the 'src' directory
 packages = [
     {include = "api", from = "src"},
-    {include = "core", from = "src"},
+    {include = "controllers", from = "src"},
     {include = "db", from = "src"},
     {include = "models", from = "src"},
     {include = "repositories", from = "src"},
