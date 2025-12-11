@@ -18,6 +18,8 @@ cp .env.example .env
 ```
 Initialize Alembic (Migrations): Run this command inside your project root to create the migration folder structure:
 
+### First Time Set up
+
 ```bash
 poetry run alembic init migrations
 ```
@@ -27,4 +29,10 @@ Run the Server:
 
 ```bash
 poetry run uvicorn app.main:app --reload
+```
+
+# Run the project 
+
+```bash
+poetry run python3 main.py
 ```
