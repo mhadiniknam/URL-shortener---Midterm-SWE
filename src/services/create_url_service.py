@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 from sqlalchemy.orm import Session
 
-from src.repositories.url_repository import URLRepository
+from src.repositories.create_url_repository import CreateUrlRepository
 from src.models.url import URL
 from src.db.config import MINUTES_TTL_APP
 from src.services.base_service import BaseService
@@ -17,7 +17,7 @@ class CreateUrlService(BaseService):
 
     def __init__(self, db: Session):
         super().__init__(db)
-        self.repository = URLRepository(db)
+        self.repository = CreateUrlRepository(db)
         # Read short code length from environment, default to 6
         self.SHORT_CODE_LENGTH = int(os.getenv('SHORT_CODE_LENGTH', 6))
         self.SHORT_CODE_CHARS = string.ascii_letters + string.digits
@@ -130,7 +130,7 @@ class CreateUrlService(BaseService):
             expiration_time = datetime.utcnow() + timedelta(minutes=MINUTES_TTL_APP)
 
         # Create URL record with error handling
-        url = self.repository.create_with_error_handling(
+        url = self.repository.create_url(
             original_url=validated_url,
             short_code=short_code,
             expiration_time=expiration_time
