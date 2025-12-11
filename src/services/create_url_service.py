@@ -9,17 +9,18 @@ from sqlalchemy.orm import Session
 from src.repositories.url_repository import URLRepository
 from src.models.url import URL
 from src.db.config import MINUTES_TTL_APP
+from src.services.base_service import BaseService
 
 
-class URLService:
-    """Service layer for URL shortening business logic"""
-
-    SHORT_CODE_CHARS = string.ascii_letters + string.digits
+class CreateUrlService(BaseService):
+    """Service for User Story 1: Create Short URL"""
 
     def __init__(self, db: Session):
+        super().__init__(db)
         self.repository = URLRepository(db)
-        # Read short code length from environment, default to 8
-        self.SHORT_CODE_LENGTH = int(os.getenv('SHORT_CODE_LENGTH', 8))
+        # Read short code length from environment, default to 6
+        self.SHORT_CODE_LENGTH = int(os.getenv('SHORT_CODE_LENGTH', 6))
+        self.SHORT_CODE_CHARS = string.ascii_letters + string.digits
 
     def validate_url(self, url: str) -> bool:
         """
@@ -51,24 +52,6 @@ class URLService:
         )
         return url_pattern.match(url) is not None
 
-    def _generate_short_code(self) -> str:
-        """
-        Generate a unique short code
-
-        Returns:
-            str: A random short code
-        """
-        for _ in range(100):  # Try up to 100 times to generate a unique code
-            short_code = ''.join(
-                secrets.choice(self.SHORT_CODE_CHARS)
-                for _ in range(self.SHORT_CODE_LENGTH)
-            )
-            if not self.repository.exists_by_short_code(short_code):
-                return short_code
-        
-        # If we can't generate a unique code after 100 attempts, raise an error
-        raise Exception("Could not generate unique short code after 100 attempts")
-
     def _validate_and_sanitize_url(self, url: str) -> str:
         """
         Validate and sanitize URL
@@ -94,11 +77,25 @@ class URLService:
         
         return url
 
-    def create_short_url(
-        self,
-        original_url: str,
-        expiration_minutes: Optional[int] = None
-    ) -> URL:
+    def _generate_short_code(self) -> str:
+        """
+        Generate a unique short code
+
+        Returns:
+            str: A random short code
+        """
+        for _ in range(100):  # Try up to 100 times to generate a unique code
+            short_code = ''.join(
+                secrets.choice(self.SHORT_CODE_CHARS)
+                for _ in range(self.SHORT_CODE_LENGTH)
+            )
+            if not self.repository.exists_by_short_code(short_code):
+                return short_code
+        
+        # If we can't generate a unique code after 100 attempts, raise an error
+        raise Exception("Could not generate unique short code after 100 attempts")
+
+    def create_short_url(self, original_url: str, expiration_minutes: Optional[int] = None) -> URL:
         """
         Create a short URL from an original URL
 
@@ -149,50 +146,3 @@ class URLService:
             )
 
         return url
-
-    def get_original_url(self, short_code: str) -> Optional[URL]:
-        """
-        Retrieve the original URL by short code
-
-        Args:
-            short_code: The short code to look up
-
-        Returns:
-            Optional[URL]: The URL object if found and not expired, None otherwise
-        """
-        return self.repository.get_by_short_code_and_check_expiry(short_code)
-
-    def get_all_urls(self) -> list[URL]:
-        """
-        Retrieve all URLs in the system
-
-        Returns:
-            List[URL]: List of all URL objects
-        """
-        return self.repository.get_all_urls()
-
-    def delete_url(self, short_code: str) -> bool:
-        """
-        Delete a URL by its short code
-
-        Args:
-            short_code: The short code to delete
-
-        Returns:
-            bool: True if deleted, False otherwise
-        """
-        return self.repository.delete_by_short_code(short_code)
-
-    def check_url_exists(self, original_url: str) -> Optional[URL]:
-        """
-        Check if the original URL already exists in the system
-
-        Args:
-            original_url: The original URL to check
-
-        Returns:
-            Optional[URL]: The existing URL object if found, None otherwise
-        """
-        # Sanitize the URL for comparison
-        validated_url = self._validate_and_sanitize_url(original_url)
-        return self.repository.get_by_original_url(validated_url)
