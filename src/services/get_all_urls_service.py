@@ -20,4 +20,4 @@ class GetAllUrlsService(BaseService):
         Returns:
             List[URL]: List of all URL objects
         """
-        raise NotImplementedError
+        return self.repository.get_all_urls()

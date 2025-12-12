@@ -1,9 +1,12 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, status
+from starlette.requests import Request
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
+from typing import List, Union
 
 from src.db.session import get_db
 from src.controllers.url_controller import URLController
-from src.schemas.url import URLShortenRequest, URLShortenResponse, URLResponse
+from src.schemas.url import URLShortenRequest, URLShortenResponse, URLResponse, GetAllUrlsResponse
 
 router = APIRouter(tags=["URLs"])
 
@@ -21,17 +24,42 @@ async def create_short_url(
     http_request: Request,
     db: Session = Depends(get_db)
 ) -> URLShortenResponse:
-    """
-    Create a short URL
-
-    - **original_url**: The original URL to shorten (required)
-    - **expiration_minutes**: Optional expiration time in minutes (TTL feature)
-
-    Returns a success response with short code and URL or a failure response with error message.
-    """
     controller = URLController(db)
     base_url = f"{str(http_request.base_url).rstrip('/')}/api/v1"
     return controller.shorten_url(request, base_url)
+
+
+@router.get(
+    "/urls",
+    summary="View all shortened URLs",
+    description="Retrieve a list of all shortened URLs in the system.",
+    response_description="Returns a response with status and data array containing all URLs with metadata"
+)
+async def get_all_urls(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    controller = URLController(db)
+    try:
+        base_url = f"{str(request.base_url).rstrip('/')}/api/v1"
+        result = controller.get_all_urls(base_url)
+        # Set HTTP status code based on response status
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR if result.status == "failure" else status.HTTP_200_OK
+        return JSONResponse(
+            content=result.model_dump(mode='json'),
+            status_code=status_code
+        )
+    except Exception as e:
+        # Handle unexpected errors
+        error_response = GetAllUrlsResponse(
+            status="failure",
+            data=[],
+            message=f"Failed to fetch URLs: {str(e)}"
+        )
+        return JSONResponse(
+            content=error_response.model_dump(mode='json'),
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 @router.get(
@@ -45,13 +73,5 @@ async def get_original_url(
     short_code: str,
     db: Session = Depends(get_db)
 ) -> URLResponse:
-    """
-    Get original URL by short code
-    
-    - **short_code**: The short code to look up
-    
-    Returns the original URL and creation timestamp.
-    """
     controller = URLController(db)
     return controller.get_original_url(short_code)
-

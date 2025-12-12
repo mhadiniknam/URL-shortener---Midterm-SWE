@@ -23,4 +23,4 @@ class RedirectToUrlService(BaseService):
         Returns:
             Optional[URL]: The URL object if found and not expired, None otherwise
         """
-        raise NotImplementedError
+        return self.repository.get_by_short_code_and_check_expiry(short_code)

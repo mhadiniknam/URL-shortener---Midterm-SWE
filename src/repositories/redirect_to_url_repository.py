@@ -22,7 +22,7 @@ class RedirectToUrlRepository(BaseRepo[URL]):
         Returns:
             Optional[URL]: The URL object if found, None otherwise
         """
-        raise NotImplementedError
+        return self.db.query(self.model).filter(self.model.short_code == short_code).first()
 
     def get_by_short_code_and_check_expiry(self, short_code: str) -> Optional[URL]:
         """
@@ -34,7 +34,10 @@ class RedirectToUrlRepository(BaseRepo[URL]):
         Returns:
             Optional[URL]: The URL object if found and not expired, None otherwise
         """
-        raise NotImplementedError
+        url = self.get_by_short_code(short_code)
+        if url and self.is_expired(url):
+            return None
+        return url
 
     def is_expired(self, url: URL) -> bool:
         """
@@ -46,4 +49,6 @@ class RedirectToUrlRepository(BaseRepo[URL]):
         Returns:
             bool: True if expired, False otherwise
         """
-        raise NotImplementedError
+        if url.expiration_time is None:
+            return False
+        return datetime.utcnow() > url.expiration_time

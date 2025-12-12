@@ -76,3 +76,48 @@ class URLErrorResponse(BaseModel):
             }
         }
 
+
+class URLItem(BaseModel):
+    """Schema for a single URL item in the list"""
+    short_code: str = Field(..., description="The short code")
+    original_url: str = Field(..., description="The original URL")
+    short_url: str = Field(..., description="The complete short URL")
+    created_at: datetime = Field(..., description="Creation timestamp")
+    expires_at: Optional[datetime] = Field(None, description="Expiration datetime if set")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "short_code": "abc123xyz",
+                "original_url": "https://www.example.com/very/long/url/path",
+                "short_url": "http://localhost:8000/api/v1/abc123xyz",
+                "created_at": "2025-12-11T20:05:18",
+                "expires_at": "2025-12-12T20:05:18"
+            }
+        }
+
+
+class GetAllUrlsResponse(BaseModel):
+    """Response schema for getting all URLs"""
+    status: str = Field(..., description="Status of the operation: success or failure")
+    data: list[URLItem] = Field(default_factory=list, description="List of URL items")
+    message: Optional[str] = Field(None, description="Message returned on failure")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "status": "success",
+                "data": [
+                    {
+                        "short_code": "abc123xyz",
+                        "original_url": "https://www.example.com/very/long/url/path",
+                        "short_url": "http://localhost:8000/api/v1/abc123xyz",
+                        "created_at": "2025-12-11T20:05:18",
+                        "expires_at": "2025-12-12T20:05:18"
+                    }
+                ]
+            }
+        }
+
+
+

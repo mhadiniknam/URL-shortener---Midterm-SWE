@@ -18,4 +18,4 @@ class GetAllUrlsRepository(BaseRepo[URL]):
         Returns:
             List[URL]: List of all URL objects
         """
-        raise NotImplementedError
+        return self.db.query(self.model).all()

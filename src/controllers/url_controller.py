@@ -1,10 +1,11 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import List
 
 from src.services.create_url_service import CreateUrlService
 from src.services.redirect_to_url_service import RedirectToUrlService
-from src.schemas.url import URLShortenRequest, URLShortenResponse, URLResponse
+from src.services.get_all_urls_service import GetAllUrlsService
+from src.schemas.url import URLShortenRequest, URLShortenResponse, URLResponse, GetAllUrlsResponse, URLItem
 
 
 class URLController:
@@ -12,6 +13,7 @@ class URLController:
 
     def __init__(self, db: Session):
         self.service = CreateUrlService(db)
+        self.get_all_service = GetAllUrlsService(db)
 
     def shorten_url(
         self,
@@ -80,7 +82,6 @@ class URLController:
         Raises:
             HTTPException: If URL not found or expired
         """
-        # Create a separate service instance for redirect operations
         redirect_service = RedirectToUrlService(self.service.db)
         url = redirect_service.get_original_url(short_code)
 
@@ -95,4 +96,37 @@ class URLController:
             short_code=url.short_code,
             created_at=url.created_at
         )
+
+    def get_all_urls(self, base_url: str) -> GetAllUrlsResponse:
+        """
+        Retrieve all URLs in the system
+
+        Args:
+            base_url: The base URL for constructing the short URLs
+
+        Returns:
+            GetAllUrlsResponse: The response containing status and data array
+        """
+        try:
+            urls = self.get_all_service.get_all_urls()
+            data = [
+                URLItem(
+                    short_code=url.short_code,
+                    original_url=url.original_url,
+                    short_url=f"{base_url}/{url.short_code}",
+                    created_at=url.created_at,
+                    expires_at=getattr(url, 'expiration_time', None)
+                )
+                for url in urls
+            ]
+            return GetAllUrlsResponse(
+                status="success",
+                data=data
+            )
+        except Exception as e:
+            return GetAllUrlsResponse(
+                status="failure",
+                data=[],
+                message=f"Failed to fetch URLs: {str(e)}"
+            )
 
