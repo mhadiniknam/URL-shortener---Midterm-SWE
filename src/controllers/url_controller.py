@@ -40,6 +40,13 @@ class URLController:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="URL not found or expired")
         return URLResponse(original_url=url.original_url, short_code=url.short_code, created_at=url.created_at)
 
+    def get_original_url_by_code(self, short_code: str):
+        try:
+            redirect_service = RedirectToUrlService(self.service.db)
+            return redirect_service.get_original_url(short_code)
+        except Exception:
+            return None
+
     def get_all_urls(self, base_url: str) -> GetAllUrlsResponse:
         try:
             urls = self.get_all_service.get_all_urls()
