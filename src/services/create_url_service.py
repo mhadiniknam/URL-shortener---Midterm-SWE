@@ -2,6 +2,7 @@ import secrets
 import string
 import re
 import os
+import time
 from datetime import datetime, timedelta
 from typing import Optional
 from sqlalchemy.orm import Session
@@ -10,6 +11,29 @@ from src.repositories.create_url_repository import CreateUrlRepository
 from src.models.url import URL
 from src.db.config import MINUTES_TTL_APP
 from src.services.base_service import BaseService
+
+
+def encode_base62(num: int) -> str:
+    """
+    Encode a positive integer into Base62 string
+
+    Args:
+        num: The positive integer to encode
+
+    Returns:
+        str: The Base62 encoded string
+    """
+    if num == 0:
+        return "0"
+
+    chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    result = ""
+
+    while num > 0:
+        result = chars[num % 62] + result
+        num //= 62
+
+    return result
 
 
 class CreateUrlService(BaseService):
@@ -77,9 +101,21 @@ class CreateUrlService(BaseService):
         
         return url
 
+    def _generate_short_code_from_id(self, url_id: int) -> str:
+        """
+        Generate a short code using Base62 encoding of the URL ID
+
+        Args:
+            url_id: The database ID of the URL record
+
+        Returns:
+            str: The Base62 encoded short code
+        """
+        return encode_base62(url_id)
+
     def _generate_short_code(self) -> str:
         """
-        Generate a unique short code
+        Generate a unique short code (deprecated - kept for backward compatibility)
 
         Returns:
             str: A random short code
@@ -91,13 +127,13 @@ class CreateUrlService(BaseService):
             )
             if not self.repository.exists_by_short_code(short_code):
                 return short_code
-        
+
         # If we can't generate a unique code after 100 attempts, raise an error
         raise Exception("Could not generate unique short code after 100 attempts")
 
     def create_short_url(self, original_url: str, expiration_minutes: Optional[int] = None) -> URL:
         """
-        Create a short URL from an original URL
+        Create a short URL from an original URL using Base62 encoding of the database ID
 
         Args:
             original_url: The original URL to shorten
@@ -108,7 +144,7 @@ class CreateUrlService(BaseService):
 
         Raises:
             ValueError: If URL is invalid
-            Exception: If unable to generate unique short code
+            Exception: If unable to create the URL
         """
         # Validate and sanitize URL
         validated_url = self._validate_and_sanitize_url(original_url)
@@ -118,9 +154,6 @@ class CreateUrlService(BaseService):
         if existing_url:
             return existing_url
 
-        # Generate unique short code
-        short_code = self._generate_short_code()
-
         # Calculate expiration time if provided
         expiration_time = None
         if expiration_minutes:
@@ -129,20 +162,13 @@ class CreateUrlService(BaseService):
             # Use default TTL from config
             expiration_time = datetime.utcnow() + timedelta(minutes=MINUTES_TTL_APP)
 
-        # Create URL record with error handling
-        url = self.repository.create_url(
+        # Create URL record with Base62-encoded ID as the short code
+        url = self.repository.create_url_with_id_based_short_code(
             original_url=validated_url,
-            short_code=short_code,
             expiration_time=expiration_time
         )
 
         if url is None:
-            # If creation failed due to collision, try once more
-            short_code = self._generate_short_code()
-            url = self.repository.create(
-                original_url=validated_url,
-                short_code=short_code,
-                expiration_time=expiration_time
-            )
+            raise Exception("Failed to create URL")
 
         return url
