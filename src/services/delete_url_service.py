@@ -23,4 +23,4 @@ class DeleteUrlService(BaseService):
         Returns:
             bool: True if deleted, False otherwise
         """
-        raise NotImplementedError
+        return self.repository.delete_by_short_code(short_code)

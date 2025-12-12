@@ -21,7 +21,12 @@ class DeleteUrlRepository(BaseRepo[URL]):
         Returns:
             bool: True if deleted, False if not found
         """
-        raise NotImplementedError
+        url = self.db.query(self.model).filter(self.model.short_code == short_code).first()
+        if url:
+            self.db.delete(url)
+            self.db.commit()
+            return True
+        return False
 
     def delete_expired_urls(self) -> int:
         """
@@ -30,4 +35,15 @@ class DeleteUrlRepository(BaseRepo[URL]):
         Returns:
             int: Number of deleted URLs
         """
-        raise NotImplementedError
+        from datetime import datetime
+        expired_urls = self.db.query(self.model).filter(
+            self.model.expiration_time != None,
+            self.model.expiration_time < datetime.utcnow()
+        ).all()
+
+        count = len(expired_urls)
+        for url in expired_urls:
+            self.db.delete(url)
+
+        self.db.commit()
+        return count

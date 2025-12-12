@@ -68,6 +68,6 @@ class URLController:
         delete_service = DeleteUrlService(self.service.db)
         deleted = delete_service.delete_url(short_code)
         if deleted:
-            return {"success": "status", "message": "deleted URL successfully"}, status.HTTP_200_OK
+            return {"status": "success", "message": "URL deleted successfully"}, status.HTTP_200_OK
         else:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="URL not found")
+            return {"status": "failure", "message": "URL not found"}, status.HTTP_404_NOT_FOUND

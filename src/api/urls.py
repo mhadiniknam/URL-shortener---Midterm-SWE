@@ -118,4 +118,4 @@ async def delete_url(short_code: str, db: Session = Depends(get_db)):
         response, code = controller.delete_url(short_code)
         return JSONResponse(content=response, status_code=code)
     except HTTPException as e:
-        return JSONResponse(content={"success": "failure", "message": e.detail}, status_code=e.status_code)
+        return JSONResponse(content={"status": "failure", "message": e.detail}, status_code=e.status_code)
