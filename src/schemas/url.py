@@ -2,122 +2,32 @@ from pydantic import BaseModel, HttpUrl, Field
 from datetime import datetime
 from typing import Optional
 
-
 class URLShortenRequest(BaseModel):
-    """Request schema for creating a short URL"""
-    original_url: HttpUrl = Field(..., description="The original URL to shorten")
-    expiration_minutes: Optional[int] = Field(
-        None, 
-        ge=1, 
-        description="Optional expiration time in minutes (TTL feature)"
-    )
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "original_url": "https://www.example.com/very/long/url/path",
-                "expiration_minutes": 1440
-            }
-        }
-
+    original_url: HttpUrl = Field(...)
+    expiration_minutes: Optional[int] = Field(None, ge=1)
 
 class URLShortenResponse(BaseModel):
-    """Response schema for creating a short URL"""
-    status: str = Field(..., description="Status of the operation: success or failure")
-    data: Optional[dict] = Field(None, description="Data returned on success")
-    message: Optional[str] = Field(None, description="Message returned on failure")
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "status": "success",
-                "data": {
-                    "short_code": "abc123xyz",
-                    "short_url": "http://localhost:8000/api/v1/abc123xyz",
-                    "original_url": "https://www.example.com/very/long/url/path",
-                    "expires_at": "2025-12-12T20:05:18"
-                }
-            }
-        }
-
-
-class URLShortenSuccessData(BaseModel):
-    """Success data for URL shortening"""
-    short_code: str = Field(..., description="The generated short code")
-    short_url: str = Field(..., description="The complete short URL")
-    original_url: str = Field(..., description="The original URL")
-    expires_at: Optional[datetime] = Field(None, description="Expiration datetime if set")
-
+    status: str
+    data: Optional[dict] = None
+    message: Optional[str] = None
 
 class URLResponse(BaseModel):
-    """Response schema for retrieving original URL"""
-    original_url: str = Field(..., description="The original URL")
-    short_code: str = Field(..., description="The short code")
-    created_at: datetime = Field(..., description="Creation timestamp")
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "original_url": "https://www.example.com/very/long/url/path",
-                "short_code": "abc123xyz",
-                "created_at": "2025-12-11T20:05:18"
-            }
-        }
-
-
-class URLErrorResponse(BaseModel):
-    """Error response schema"""
-    detail: str = Field(..., description="Error message")
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "detail": "URL not found or expired"
-            }
-        }
-
+    original_url: str
+    short_code: str
+    created_at: datetime
 
 class URLItem(BaseModel):
-    """Schema for a single URL item in the list"""
-    short_code: str = Field(..., description="The short code")
-    original_url: str = Field(..., description="The original URL")
-    short_url: str = Field(..., description="The complete short URL")
-    created_at: datetime = Field(..., description="Creation timestamp")
-    expires_at: Optional[datetime] = Field(None, description="Expiration datetime if set")
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "short_code": "abc123xyz",
-                "original_url": "https://www.example.com/very/long/url/path",
-                "short_url": "http://localhost:8000/api/v1/abc123xyz",
-                "created_at": "2025-12-11T20:05:18",
-                "expires_at": "2025-12-12T20:05:18"
-            }
-        }
-
+    short_code: str
+    original_url: str
+    short_url: str
+    created_at: datetime
+    expires_at: Optional[datetime] = None
 
 class GetAllUrlsResponse(BaseModel):
-    """Response schema for getting all URLs"""
-    status: str = Field(..., description="Status of the operation: success or failure")
-    data: list[URLItem] = Field(default_factory=list, description="List of URL items")
-    message: Optional[str] = Field(None, description="Message returned on failure")
+    status: str
+    data: list[URLItem] = []
+    message: Optional[str] = None
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "status": "success",
-                "data": [
-                    {
-                        "short_code": "abc123xyz",
-                        "original_url": "https://www.example.com/very/long/url/path",
-                        "short_url": "http://localhost:8000/api/v1/abc123xyz",
-                        "created_at": "2025-12-11T20:05:18",
-                        "expires_at": "2025-12-12T20:05:18"
-                    }
-                ]
-            }
-        }
-
-
-
+class URLDeleteResponse(BaseModel):
+    success: str
+    message: str
