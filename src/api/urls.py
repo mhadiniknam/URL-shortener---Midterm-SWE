@@ -9,25 +9,25 @@ router = APIRouter(tags=["URLs"])
 
 
 @router.post(
-    "/shorten",
+    "/",
     response_model=URLShortenResponse,
     status_code=201,
     summary="Create a short URL",
     description="Create a shortened URL from an original URL. Optionally set expiration time in minutes.",
-    response_description="Returns the short code and complete short URL"
+    response_description="Returns success status with short URL data or failure status with error message"
 )
-async def shorten_url(
+async def create_short_url(
     request: URLShortenRequest,
     http_request: Request,
     db: Session = Depends(get_db)
 ) -> URLShortenResponse:
     """
     Create a short URL
-    
+
     - **original_url**: The original URL to shorten (required)
     - **expiration_minutes**: Optional expiration time in minutes (TTL feature)
-    
-    Returns a short code and the complete short URL.
+
+    Returns a success response with short code and URL or a failure response with error message.
     """
     controller = URLController(db)
     base_url = f"{str(http_request.base_url).rstrip('/')}/api/v1"

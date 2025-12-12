@@ -9,7 +9,7 @@ This script simulates the behavior of the refactored service to ensure:
 
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from src.services.create_url_service import encode_base62
 
